@@ -1,7 +1,8 @@
 <?php
 
 // Register settings, admin menu, and enqueue scripts for admin page
-add_action('admin_menu', 'seo_framework_custom_robots_add_admin_menu');
+// add_action('admin_menu', 'seo_framework_custom_robots_add_admin_menu');
+add_action('admin_menu', 'seo_framework_custom_add_submenu', 20);
 add_action('admin_init', 'seo_framework_custom_robots_settings_init');
 
 // Settings Initialization
@@ -31,26 +32,44 @@ function seo_framework_custom_robots_path_render() {
     $path = esc_attr(get_option('seo_framework_custom_robots_path', 'robots'));
     $site_url = site_url('/');
     
-    echo '<input type="text" id="custom_robots_path" name="seo_framework_custom_robots_path" value="' . $path . '" />';
-    echo '<p><small>Full Path: <a href="' . esc_url($site_url . $path) . '" target="_blank" id="robots_preview_link">' . esc_html($site_url . $path) . '</a></small></p>';
+    echo $site_url . '<input type="text" id="custom_robots_path" name="seo_framework_custom_robots_path" value="' . $path . '" />';
 }
 
 // Register the admin menu
-function seo_framework_custom_robots_add_admin_menu() {
-    add_options_page(
-        '',
-        'Custom Robots.txt',
-        'manage_options',
-        'seo_framework_custom_robots',
-        'seo_framework_custom_robots_options_page'
+// function seo_framework_custom_robots_add_admin_menu() {
+//     add_options_page(
+//         '',
+//         'Custom Robots.txt',
+//         'manage_options',
+//         'seo_framework_custom_robots',
+//         'seo_framework_custom_robots_options_page'
+//     );
+// }
+
+// Register the submenu under The SEO Framework menu
+function seo_framework_custom_add_submenu() {
+    add_submenu_page(
+        'theseoframework-settings',       // Parent slug
+        'Custom Robots.txt',              // Page title
+        'Custom Robots.txt',              // Menu title
+        'manage_options',                 // Capability
+        'seo_framework_custom_robots',    // Menu slug
+        'seo_framework_custom_robots_options_page' // Callback function
     );
+}
+
+// Add Settings link to the plugin listing
+add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'seo_framework_custom_add_settings_link');
+function seo_framework_custom_add_settings_link($links) {
+    $settings_link = '<a href="' . esc_url(admin_url('admin.php?page=seo_framework_custom_robots')) . '">' . __('Settings') . '</a>';
+    array_unshift($links, $settings_link);
+    return $links;
 }
 
 // Admin page content
 function seo_framework_custom_robots_options_page() {
     ?>
     <div class="wrap">
-        <h1><?php _e('Custom Robots.txt Settings', 'seo_framework_custom_robots_txt'); ?></h1>
         <form action="options.php" method="post">
             <?php
             settings_fields('seo_framework_custom_robots');
@@ -80,16 +99,6 @@ function seo_framework_custom_robots_options_page() {
             <textarea rows="10" cols="50" readonly><?php echo esc_textarea(seo_framework_custom_get_robots_content()); ?></textarea>
         </form>
     </div>
-    <script>
-        // Update preview link as path is modified
-        document.getElementById('custom_robots_path').addEventListener('input', function() {
-            const path = this.value;
-            const previewLink = document.getElementById('robots_preview_link');
-            const siteUrl = "<?php echo esc_url(site_url('/')); ?>";
-            previewLink.href = siteUrl + path;
-            previewLink.textContent = siteUrl + path;
-        });
-    </script>
     <?php
 }
 
